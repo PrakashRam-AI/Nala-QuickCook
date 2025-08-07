@@ -21,11 +21,10 @@
 
     <div id="results"></div>
 
-    <!-- ✅ Only the new JS modules you actually need -->
+    <!-- ✅ JS modules in correct order -->
     <script src="api.js"></script>
     <script src="main.js"></script>
-<script src="search.js?v=1"></script> <!-- 🔁 Add this line -->
-<script src="search.js?v=3"></script> <!-- Add version to avoid cache -->
-
+    <script src="search.js?v=3"></script> <!-- cache-busting version -->
+    <script src="prefs.js"></script>
   </body>
 </html>

@@ -4,7 +4,7 @@ function savePreferences(ingredient, region) {
   localStorage.setItem("lastRegion", region);
 }
 
-// Load preferences when page loads
+// Load preferences on page load
 function loadPreferences() {
   const lastIngredient = localStorage.getItem("lastIngredient");
   const lastRegion = localStorage.getItem("lastRegion");
@@ -17,5 +17,5 @@ function loadPreferences() {
   }
 }
 
-// Call on page load
-window.onload = loadPreferences;
+// Call loadPreferences once DOM is fully ready
+window.addEventListener("DOMContentLoaded", loadPreferences);
