@@ -1,4 +1,6 @@
 // -- MealDB API Endpoint --
+// Updated with MealDB integration
+
 const MEALDB_SEARCH_URL = "https://www.themealdb.com/api/json/v1/1/filter.php?i=";
 const MEALDB_DETAIL_URL = "https://www.themealdb.com/api/json/v1/1/lookup.php?i=";
 
