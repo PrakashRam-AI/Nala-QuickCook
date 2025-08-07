@@ -1,30 +1,41 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>QuickCook</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <label for="regionSelect"><strong>Select Region:</strong></label>
-    <select id="regionSelect">
-      <option value="">-- All Regions --</option>
-      <option value="North Indian">North Indian</option>
-      <option value="South Indian">South Indian</option>
-      <option value="Pan-Indian">Pan-Indian</option>
-      <option value="West Indian">West Indian</option>
-    </select>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nalan 🍲</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
 
-    <h2>Find a Recipe Based on Ingredients</h2>
-    <input type="text" id="ingredientInput" placeholder="e.g. tomato, paneer" />
-    <button onclick="searchRecipes()">Search</button>
+  <!-- Brand Header -->
+  <div class="app-header">
+    <h1>Nalan 🍲</h1>
+  </div>
 
-    <div id="results"></div>
+  <!-- Region Selector -->
+  <label for="regionSelect"><strong>Select Region:</strong></label>
+  <select id="regionSelect">
+    <option value="">-- All Regions --</option>
+    <option value="North Indian">North Indian</option>
+    <option value="South Indian">South Indian</option>
+    <option value="Pan-Indian">Pan-Indian</option>
+    <option value="West Indian">West Indian</option>
+  </select>
 
-    <!-- ✅ JS modules in correct order -->
-    <script src="api.js"></script>
-    <script src="main.js"></script>
-    <script src="search.js?v=3"></script> <!-- cache-busting version -->
-    <script src="prefs.js"></script>
-  </body>
+  <!-- Ingredient Input -->
+  <h2>Find a Recipe Based on Ingredients</h2>
+  <input type="text" id="ingredientInput" placeholder="e.g. tomato, paneer" />
+  <button onclick="searchRecipes()">Search</button>
+
+  <!-- Results Section -->
+  <div id="results"></div>
+
+  <!-- JavaScript Modules -->
+  <script src="api.js"></script>
+  <script src="main.js"></script>
+  <script src="search.js?v=6"></script>
+  <script src="prefs.js?v=2"></script>
+
+</body>
 </html>
