@@ -1,21 +1,17 @@
-// Save preferences when user searches
-function savePreferences(ingredient, region) {
-  localStorage.setItem("lastIngredient", ingredient);
+// ✅ Save only the region preference
+function savePreferences(region) {
   localStorage.setItem("lastRegion", region);
 }
 
-// Load preferences on page load
+// ✅ Load region preference on page load
 function loadPreferences() {
-  const lastIngredient = localStorage.getItem("lastIngredient");
   const lastRegion = localStorage.getItem("lastRegion");
 
-  if (lastIngredient) {
-    document.getElementById("ingredientInput").value = lastIngredient;
-  }
   if (lastRegion) {
-    document.getElementById("regionSelect").value = lastRegion;
+    const regionSelect = document.getElementById("regionSelect");
+    if (regionSelect) regionSelect.value = lastRegion;
   }
 }
 
-// Call loadPreferences once DOM is fully ready
+// ✅ Load preferences only when DOM is ready
 window.addEventListener("DOMContentLoaded", loadPreferences);
