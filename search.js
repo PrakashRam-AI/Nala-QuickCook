@@ -1,5 +1,8 @@
 async function searchRecipes() {
-  const input = document.getElementById("ingredientInput").value.trim().toLowerCase();
+  const inputField = document.getElementById("ingredientInput");
+  const regionSelect = document.getElementById("regionSelect");
+  const input = inputField.value.trim().toLowerCase();
+  const selectedRegion = regionSelect.value;
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML = "";
 
@@ -7,6 +10,10 @@ async function searchRecipes() {
     resultsDiv.innerHTML = "<p>Please enter an ingredient.</p>";
     return;
   }
+
+  // ✅ Save preferences to localStorage
+  localStorage.setItem("lastIngredient", input);
+  localStorage.setItem("lastRegion", selectedRegion);
 
   const recipes = await getRecipesByIngredient(input);
 
@@ -41,3 +48,29 @@ async function searchRecipes() {
     `;
   }
 }
+
+// ✅ Load saved preferences when the page loads
+function loadPreferences() {
+  const inputField = document.getElementById("ingredientInput");
+  const regionSelect = document.getElementById("regionSelect");
+
+  const savedIngredient = localStorage.getItem("lastIngredient");
+  const savedRegion = localStorage.getItem("lastRegion");
+
+  if (savedIngredient) inputField.value = savedIngredient;
+  if (savedRegion) regionSelect.value = savedRegion;
+}
+
+// ✅ Add Enter key support
+document.addEventListener("DOMContentLoaded", () => {
+  loadPreferences();
+
+  document
+    .getElementById("ingredientInput")
+    .addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        searchRecipes();
+      }
+    });
+});
