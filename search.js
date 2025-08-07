@@ -1,8 +1,5 @@
 async function searchRecipes() {
-  const inputField = document.getElementById("ingredientInput");
-  const regionSelect = document.getElementById("regionSelect");
-  const input = inputField.value.trim().toLowerCase();
-  const selectedRegion = regionSelect.value;
+  const input = document.getElementById("ingredientInput").value.trim().toLowerCase();
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML = "";
 
@@ -11,23 +8,23 @@ async function searchRecipes() {
     return;
   }
 
-  // ✅ Save preferences to localStorage
-  localStorage.setItem("lastIngredient", input);
-  localStorage.setItem("lastRegion", selectedRegion);
+  let recipes = await getRecipesByIngredient(input);
 
-  const recipes = await getRecipesByIngredient(input);
+  // ✅ Filter out any invalid or null entries
+  recipes = recipes.filter(recipe => recipe && (recipe.strMeal || recipe.name));
 
-  if (recipes.length === 0) {
+  // ✅ Limit to 3 recipes only
+  const limitedRecipes = recipes.slice(0, 3);
+
+  if (limitedRecipes.length === 0) {
     resultsDiv.innerHTML = "<p>No recipes found for that ingredient.</p>";
     return;
   }
 
-  const limitedRecipes = recipes.slice(0, 3); // ✅ Limit to 3 results
-
   for (const recipe of limitedRecipes) {
     const videoLink = await fetchYouTubeVideo(recipe.strMeal || recipe.name);
 
-    // ✅ Extract ingredients from strIngredient1 to strIngredient20
+    // ✅ Extract ingredients
     const ingredients = [];
     for (let i = 1; i <= 20; i++) {
       const ing = recipe[`strIngredient${i}`];
@@ -48,29 +45,3 @@ async function searchRecipes() {
     `;
   }
 }
-
-// ✅ Load saved preferences when the page loads
-function loadPreferences() {
-  const inputField = document.getElementById("ingredientInput");
-  const regionSelect = document.getElementById("regionSelect");
-
-  const savedIngredient = localStorage.getItem("lastIngredient");
-  const savedRegion = localStorage.getItem("lastRegion");
-
-  if (savedIngredient) inputField.value = savedIngredient;
-  if (savedRegion) regionSelect.value = savedRegion;
-}
-
-// ✅ Add Enter key support
-document.addEventListener("DOMContentLoaded", () => {
-  loadPreferences();
-
-  document
-    .getElementById("ingredientInput")
-    .addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        searchRecipes();
-      }
-    });
-});
