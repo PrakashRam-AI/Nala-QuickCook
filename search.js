@@ -1,4 +1,11 @@
 let currentUtterance = null;
+// Preload voices on Chrome
+if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = () => {
+    speechSynthesis.getVoices(); // Preload voices
+  };
+}
+
 let isPaused = false;
 
 // ✅ Expand common cooking abbreviations in TTS
@@ -94,18 +101,21 @@ async function searchRecipes() {
     const instructions = recipe.strInstructions || recipe.instructions || "Instructions not available";
 
     resultsDiv.innerHTML += `
-      <div style="margin-bottom: 20px;">
-        <h3 style="display: flex; align-items: center; gap: 10px;">
-          ${recipeName}
-          <button onclick='readRecipeAloud(${JSON.stringify(recipeName)}, ${JSON.stringify(ingredients)}, ${JSON.stringify(instructions)})' title="Read Aloud" style="font-size: 18px; background: none; border: none; cursor: pointer;">🔊</button>
-          <button onclick='toggleSpeech()' title="Pause/Resume" style="font-size: 18px; background: none; border: none; cursor: pointer;">⏯️</button>
-          <button onclick='stopSpeech()' title="Stop" style="font-size: 18px; background: none; border: none; cursor: pointer;">🛑</button>
-        </h3>
-        <img src="${recipe.strMealThumb || recipe.image}" alt="${recipeName}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />
-        <p><strong>Ingredients:</strong> ${ingredients.join(", ")}</p>
-        <p><strong>Instructions:</strong> ${instructions}</p>
-        ${videoLink ? `<p><a href="${videoLink}" target="_blank">🎥 Watch Recipe Video</a></p>` : `<p>No video available</p>`}
-      </div><hr/>
-    `;
+  <div style="margin-bottom: 20px;">
+    <h3 style="display: flex; align-items: center; justify-content: space-between;">
+      <span>${recipeName}</span>
+      <span style="display: flex; gap: 10px; align-items: center;">
+        <button onclick='readRecipeAloud(${JSON.stringify(recipeName)}, ${JSON.stringify(ingredients)}, ${JSON.stringify(instructions)})' title="Read Aloud" style="font-size: 18px; background: none; border: none; cursor: pointer;">🔊</button>
+        <button onclick='toggleSpeech()' title="Pause/Resume" style="font-size: 18px; background: none; border: none; cursor: pointer;">⏯️</button>
+        <button onclick='stopSpeech()' title="Stop" style="font-size: 18px; background: none; border: none; cursor: pointer;">🛑</button>
+      </span>
+    </h3>
+    <img src="${recipe.strMealThumb || recipe.image}" alt="${recipeName}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />
+    <p><strong>Ingredients:</strong> ${ingredients.join(", ")}</p>
+    <p><strong>Instructions:</strong> ${instructions}</p>
+    ${videoLink ? `<p><a href="${videoLink}" target="_blank">🎥 Watch Recipe Video</a></p>` : `<p>No video available</p>`}
+  </div><hr/>
+`;
+
   }
 }
