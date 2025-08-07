@@ -93,30 +93,39 @@ const recipes = [
     ingredients: ["paneer", "tomato", "cream", "butter", "spices"],
     cook_time: "30 mins",
     region: "North Indian",
-    diet: "Vegetarian"
+    diet: "Vegetarian",
+    image: "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/12/paneer-butter-masala.jpg",
+    video: "https://www.youtube.com/watch?v=AXOa1ZqT-NA"
   },
   {
     name: "Masala Dosa",
     ingredients: ["rice", "urad dal", "potato", "onion", "chilli"],
     cook_time: "40 mins",
     region: "South Indian",
-    diet: "Vegetarian"
+    diet: "Vegetarian",
+    image: "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/08/masala-dosa.jpg",
+    video: "https://www.youtube.com/watch?v=OHsdK2U6xtk"
   },
   {
     name: "Chicken Biryani",
     ingredients: ["chicken", "basmati rice", "yogurt", "mint", "spices"],
     cook_time: "60 mins",
     region: "Pan-Indian",
-    diet: "Non-Vegetarian"
+    diet: "Non-Vegetarian",
+    image: "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/12/chicken-biryani-recipe.jpg",
+    video: "https://www.youtube.com/watch?v=TnpM-cH9hwg"
   },
   {
     name: "Poha",
     ingredients: ["flattened rice", "mustard seeds", "onion", "turmeric", "coriander"],
     cook_time: "15 mins",
     region: "West Indian",
-    diet: "Vegetarian"
+    diet: "Vegetarian",
+    image: "https://www.indianhealthyrecipes.com/wp-content/uploads/2022/06/poha-recipe.jpg",
+    video: "https://www.youtube.com/watch?v=IXEiJ8TIdKM"
   }
 ];
+
 
 function searchRecipes() {
   const input = document.getElementById("ingredientInput").value.toLowerCase().split(",").map(i => i.trim());
@@ -128,15 +137,15 @@ function searchRecipes() {
   );
 
   if (matches.length === 0) {
-    resultsDiv.innerHTML = "<p>No matching recipes found.</p>";
-  } else {
-    matches.forEach(recipe => {
-      resultsDiv.innerHTML += `<div>
-        <h3>${recipe.name}</h3>
-        <p><strong>Time:</strong> ${recipe.cook_time}</p>
-        <p><strong>Region:</strong> ${recipe.region}</p>
-        <p><strong>Diet:</strong> ${recipe.diet}</p>
-      </div><hr/>`;
+   resultsDiv.innerHTML += `<div>
+  <h3>${recipe.name}</h3>
+  <img src="${recipe.image}" alt="${recipe.name}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />
+  <p><strong>Time:</strong> ${recipe.cook_time}</p>
+  <p><strong>Region:</strong> ${recipe.region}</p>
+  <p><strong>Diet:</strong> ${recipe.diet}</p>
+  <p><a href="${recipe.video}" target="_blank">🎥 Watch Recipe Video</a></p>
+</div><hr/>`;
+
     });
   }
 }
