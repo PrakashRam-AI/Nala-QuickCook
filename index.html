@@ -1,68 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>QuickCook</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        background-color: #fff7e6;
-        max-width: 600px;
-        margin: auto;
-      }
-
-      h2 {
-        font-size: 20px;
-        margin-top: 20px;
-      }
-
-      label, select, input, button {
-        display: block;
-        width: 100%;
-        margin: 10px 0;
-        font-size: 16px;
-      }
-
-      input, select, button {
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-      }
-
-      button {
-        background-color: #ff7f50;
-        color: white;
-        border: none;
-        cursor: pointer;
-      }
-
-      button:hover {
-        background-color: #e67340;
-      }
-
-      #results {
-        margin-top: 20px;
-      }
-
-      #results div {
-        background-color: #fff;
-        border: 1px solid #ddd;
-        padding: 15px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-      }
-
-      @media (max-width: 480px) {
-        body {
-          padding: 10px;
-        }
-
-        h2 {
-          font-size: 18px;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <label for="regionSelect"><strong>Select Region:</strong></label>
@@ -80,92 +21,8 @@
 
     <div id="results"></div>
 
-    <script>
-      const recipes = [
-        {
-          name: "Paneer Butter Masala",
-          ingredients: ["paneer", "tomato", "cream", "butter", "spices"],
-          cook_time: "30 mins",
-          region: "North Indian",
-          diet: "Vegetarian",
-          image: "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/12/paneer-butter-masala.jpg"
-        },
-        {
-          name: "Masala Dosa",
-          ingredients: ["rice", "urad dal", "potato", "onion", "chilli"],
-          cook_time: "40 mins",
-          region: "South Indian",
-          diet: "Vegetarian",
-          image: "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/08/masala-dosa.jpg"
-        },
-        {
-          name: "Chicken Biryani",
-          ingredients: ["chicken", "basmati rice", "yogurt", "mint", "spices"],
-          cook_time: "60 mins",
-          region: "Pan-Indian",
-          diet: "Non-Vegetarian",
-          image: "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/12/chicken-biryani-recipe.jpg"
-        },
-        {
-          name: "Poha",
-          ingredients: ["flattened rice", "mustard seeds", "onion", "turmeric", "coriander"],
-          cook_time: "15 mins",
-          region: "West Indian",
-          diet: "Vegetarian",
-          image: "https://www.indianhealthyrecipes.com/wp-content/uploads/2022/06/poha-recipe.jpg"
-        }
-      ];
-
-      const YOUTUBE_API_KEY = "AIzaSyDt9MlePDg0HXXi4gvnhLODXLiHycpd4mc"; 
-
-      async function fetchYouTubeVideo(recipeName) {
-        const query = `${recipeName} recipe`;
-        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=1&key=${YOUTUBE_API_KEY}`;
-
-        try {
-          const response = await fetch(url);
-          const data = await response.json();
-
-          if (data.items && data.items.length > 0) {
-            const videoId = data.items[0].id.videoId;
-            return `https://www.youtube.com/watch?v=${videoId}`;
-          } else {
-            return null;
-          }
-        } catch (error) {
-          console.error("YouTube API error:", error);
-          return null;
-        }
-      }
-
-      function searchRecipes() {
-        const input = document.getElementById("ingredientInput").value.toLowerCase().split(",").map(i => i.trim());
-        const selectedRegion = document.getElementById("regionSelect").value;
-        const resultsDiv = document.getElementById("results");
-        resultsDiv.innerHTML = "";
-
-        const matches = recipes.filter(recipe =>
-          input.some(ing => recipe.ingredients.some(rIng => rIng.includes(ing))) &&
-          (selectedRegion === "" || recipe.region === selectedRegion)
-        );
-
-        if (matches.length === 0) {
-          resultsDiv.innerHTML = "<p>No matching recipes found.</p>";
-        } else {
-          matches.forEach(async (recipe) => {
-            const videoLink = await fetchYouTubeVideo(recipe.name);
-
-            resultsDiv.innerHTML += `<div>
-              <h3>${recipe.name}</h3>
-              <img src="${recipe.image}" alt="${recipe.name}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />
-              <p><strong>Time:</strong> ${recipe.cook_time}</p>
-              <p><strong>Region:</strong> ${recipe.region}</p>
-              <p><strong>Diet:</strong> ${recipe.diet}</p>
-              ${videoLink ? `<p><a href="${videoLink}" target="_blank">🎥 Watch Recipe Video</a></p>` : `<p>No video available</p>`}
-            </div><hr/>`;
-          });
-        }
-      }
-    </script>
+    <script src="recipes.js"></script>
+    <script src="youtube.js"></script>
+    <script src="search.js"></script>
   </body>
 </html>
