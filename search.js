@@ -1,14 +1,20 @@
 let currentUtterance = null;
 let isPaused = false;
 
-// ✅ Preload voices on Chrome
-if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
-  speechSynthesis.onvoiceschanged = () => {
-    speechSynthesis.getVoices();
-  };
+// ✅ Load voices fully before using them (fix for Chrome)
+function loadVoices() {
+  return new Promise(resolve => {
+    let voices = speechSynthesis.getVoices();
+    if (voices.length) return resolve(voices);
+
+    speechSynthesis.onvoiceschanged = () => {
+      voices = speechSynthesis.getVoices();
+      resolve(voices);
+    };
+  });
 }
 
-// ✅ Expand common cooking abbreviations
+// ✅ Expand abbreviations in TTS
 function expandAbbreviations(text) {
   return text
     .replace(/\btbs\b/gi, "tablespoon")
@@ -21,39 +27,35 @@ function expandAbbreviations(text) {
     .replace(/\bltrs\b/gi, "liters");
 }
 
-// ✅ Read aloud the recipe
-function readRecipeAloud(recipeName, ingredients, instructions) {
-  // Cancel current speech if any
-  if (speechSynthesis.speaking || isPaused) {
+// ✅ TTS: Read aloud
+async function readRecipeAloud(recipeName, ingredients, instructions) {
+  if (speechSynthesis.speaking || speechSynthesis.paused) {
     speechSynthesis.cancel();
   }
 
+  const voices = await loadVoices();
+
   const message = `The recipe is for ${recipeName}. 
-  To make this dish, you'll need: ${expandAbbreviations(ingredients.join(", "))}. 
-  Here's how it's made: ${expandAbbreviations(instructions)}`;
+    To make this dish, you'll need: ${expandAbbreviations(ingredients.join(", "))}. 
+    Here's how it's made: ${expandAbbreviations(instructions)}`;
 
   currentUtterance = new SpeechSynthesisUtterance(message);
-  currentUtterance.lang = 'en-IN';
+  currentUtterance.lang = 'en-US'; // Use en-US for wider support
   currentUtterance.pitch = 1;
   currentUtterance.rate = 0.9;
 
-  const voices = speechSynthesis.getVoices();
-  const preferredVoice = voices.find(
-    voice => voice.lang.startsWith("en") && (voice.name.includes("Female") || voice.name.includes("Google"))
-  );
-  if (preferredVoice) {
-    currentUtterance.voice = preferredVoice;
-  }
+  const preferredVoice = voices.find(v => v.name.includes("Female") || v.name.includes("Google"));
+  if (preferredVoice) currentUtterance.voice = preferredVoice;
 
-  isPaused = false;
   speechSynthesis.speak(currentUtterance);
+  isPaused = false;
 }
 
-// ✅ Toggle pause/resume
+// ✅ TTS: Pause/Resume
 function toggleSpeech() {
-  if (!speechSynthesis.speaking && !isPaused) return;
+  if (!speechSynthesis.speaking) return;
 
-  if (isPaused) {
+  if (speechSynthesis.paused) {
     speechSynthesis.resume();
     isPaused = false;
   } else {
@@ -62,18 +64,17 @@ function toggleSpeech() {
   }
 }
 
-// ✅ Stop speech
+// ✅ TTS: Stop
 function stopSpeech() {
-  if (speechSynthesis.speaking || isPaused) {
+  if (speechSynthesis.speaking || speechSynthesis.paused) {
     speechSynthesis.cancel();
     isPaused = false;
-    currentUtterance = null;
   }
 }
 
+// ✅ Search + Render UI
 async function searchRecipes() {
   const input = document.getElementById("ingredientInput").value.trim().toLowerCase();
-  const region = document.getElementById("regionSelect").value;
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML = "";
 
@@ -82,11 +83,8 @@ async function searchRecipes() {
     return;
   }
 
-  // ✅ Save only region preference
-  savePreferences(region);
-
   let recipes = await getRecipesByIngredient(input);
-  recipes = recipes.filter(recipe => recipe && (recipe.strMeal || recipe.name));
+  recipes = recipes.filter(r => r && (r.strMeal || r.name));
   const limitedRecipes = recipes.slice(0, 3);
 
   if (limitedRecipes.length === 0) {
@@ -97,7 +95,6 @@ async function searchRecipes() {
   for (const recipe of limitedRecipes) {
     const videoLink = await fetchYouTubeVideo(recipe.strMeal || recipe.name);
 
-    // ✅ Extract ingredients
     const ingredients = [];
     for (let i = 1; i <= 20; i++) {
       const ing = recipe[`strIngredient${i}`];
