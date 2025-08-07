@@ -21,4 +21,65 @@
   </head>
   <body>
     <h1>Welcome to QuickCook! 👨‍🍳</h1>
-    <p>This is a placeholder page for your cooking app. More deliciousness coming so
+    <p>This is a placeholder page for your cooking app. More deliciousness coming soon
+<h2>Find a Recipe Based on Ingredients</h2>
+<input type="text" id="ingredientInput" placeholder="e.g. tomato, paneer" />
+<button onclick="searchRecipes()">Search</button>
+
+<div id="results"></div>
+<script>
+const recipes = [
+  {
+    name: "Paneer Butter Masala",
+    ingredients: ["paneer", "tomato", "cream", "butter", "spices"],
+    cook_time: "30 mins",
+    region: "North Indian",
+    diet: "Vegetarian"
+  },
+  {
+    name: "Masala Dosa",
+    ingredients: ["rice", "urad dal", "potato", "onion", "chilli"],
+    cook_time: "40 mins",
+    region: "South Indian",
+    diet: "Vegetarian"
+  },
+  {
+    name: "Chicken Biryani",
+    ingredients: ["chicken", "basmati rice", "yogurt", "mint", "spices"],
+    cook_time: "60 mins",
+    region: "Pan-Indian",
+    diet: "Non-Vegetarian"
+  },
+  {
+    name: "Poha",
+    ingredients: ["flattened rice", "mustard seeds", "onion", "turmeric", "coriander"],
+    cook_time: "15 mins",
+    region: "West Indian",
+    diet: "Vegetarian"
+  }
+];
+
+function searchRecipes() {
+  const input = document.getElementById("ingredientInput").value.toLowerCase().split(",").map(i => i.trim());
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "";
+
+  const matches = recipes.filter(recipe =>
+    input.every(ing => recipe.ingredients.includes(ing))
+  );
+
+  if (matches.length === 0) {
+    resultsDiv.innerHTML = "<p>No matching recipes found.</p>";
+  } else {
+    matches.forEach(recipe => {
+      resultsDiv.innerHTML += `<div>
+        <h3>${recipe.name}</h3>
+        <p><strong>Time:</strong> ${recipe.cook_time}</p>
+        <p><strong>Region:</strong> ${recipe.region}</p>
+        <p><strong>Diet:</strong> ${recipe.diet}</p>
+      </div><hr/>`;
+    });
+  }
+}
+</script>
+
