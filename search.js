@@ -27,28 +27,42 @@ function expandAbbreviations(text) {
     .replace(/\bltrs\b/gi, "liters");
 }
 
-// ✅ TTS: Read aloud
+// ✅ Ensure voices are fully loaded before TTS
 async function readRecipeAloud(recipeName, ingredients, instructions) {
   if (speechSynthesis.speaking || speechSynthesis.paused) {
     speechSynthesis.cancel();
   }
 
+  // Wait until voices are fully loaded
+  const loadVoices = () =>
+    new Promise(resolve => {
+      const voices = speechSynthesis.getVoices();
+      if (voices.length) return resolve(voices);
+      speechSynthesis.onvoiceschanged = () => resolve(speechSynthesis.getVoices());
+    });
+
   const voices = await loadVoices();
+
+  const preferredVoice = voices.find(v =>
+    v.lang.startsWith('en') &&
+    (v.name.includes("Female") || v.name.includes("Google") || v.name.includes("India"))
+  );
 
   const message = `The recipe is for ${recipeName}. 
     To make this dish, you'll need: ${expandAbbreviations(ingredients.join(", "))}. 
     Here's how it's made: ${expandAbbreviations(instructions)}`;
 
   currentUtterance = new SpeechSynthesisUtterance(message);
-  currentUtterance.lang = 'en-US'; // Use en-US for wider support
+  currentUtterance.lang = 'en-US'; // consistent fallback
   currentUtterance.pitch = 1;
   currentUtterance.rate = 0.9;
 
-  const preferredVoice = voices.find(v => v.name.includes("Female") || v.name.includes("Google"));
   if (preferredVoice) currentUtterance.voice = preferredVoice;
 
   speechSynthesis.speak(currentUtterance);
   isPaused = false;
+}
+
 }
 
 // ✅ TTS: Pause/Resume
