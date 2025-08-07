@@ -125,6 +125,27 @@ const recipes = [
     video: "https://www.youtube.com/watch?v=0qtVU_HydPE"
   }
 ];
+const YOUTUBE_API_KEY = "AIzaSyDt9MlePDg0HXXi4gvnhLODXLiHycpd4mc";  // <-- Replace with your real key
+
+async function fetchYouTubeVideo(recipeName) {
+  const query = `${recipeName} recipe`;
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=1&key=${YOUTUBE_API_KEY}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.items && data.items.length > 0) {
+      const videoId = data.items[0].id.videoId;
+      return `https://www.youtube.com/watch?v=${videoId}`;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("YouTube API error:", error);
+    return null;
+  }
+}
 
 
 
@@ -142,18 +163,19 @@ function searchRecipes() {
   if (matches.length === 0) {
     resultsDiv.innerHTML = "<p>No matching recipes found.</p>";
   } else {
-    matches.forEach(recipe => {
-      resultsDiv.innerHTML += `<div>
-        <h3>${recipe.name}</h3>
-        <img src="${recipe.image}" alt="${recipe.name}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />
-        <p><strong>Time:</strong> ${recipe.cook_time}</p>
-        <p><strong>Region:</strong> ${recipe.region}</p>
-        <p><strong>Diet:</strong> ${recipe.diet}</p>
-        <p><a href="${recipe.video}" target="_blank">🎥 Watch Recipe Video</a></p>
-      </div><hr/>`;
-    });
-  }
-}
+ matches.forEach(async (recipe) => {
+  const videoLink = await fetchYouTubeVideo(recipe.name);
+
+  resultsDiv.innerHTML += `<div>
+    <h3>${recipe.name}</h3>
+    <img src="${recipe.image}" alt="${recipe.name}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />
+    <p><strong>Time:</strong> ${recipe.cook_time}</p>
+    <p><strong>Region:</strong> ${recipe.region}</p>
+    <p><strong>Diet:</strong> ${recipe.diet}</p>
+    ${videoLink ? `<p><a href="${videoLink}" target="_blank">🎥 Watch Recipe Video</a></p>` : `<p>No video available</p>`}
+  </div><hr/>`;
+});
+
 
 </script>
 
