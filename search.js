@@ -1,15 +1,60 @@
+let currentUtterance = null;
+let isPaused = false;
+
+// ✅ Expand common cooking abbreviations in TTS
+function expandAbbreviations(text) {
+  return text
+    .replace(/\btbs\b/gi, "tablespoon")
+    .replace(/\btbsp\b/gi, "tablespoon")
+    .replace(/\btsp\b/gi, "teaspoon")
+    .replace(/\bkg\b/gi, "kilogram")
+    .replace(/\bg\b/gi, "gram")
+    .replace(/\bml\b/gi, "milliliter")
+    .replace(/\bcms\b/gi, "centimeters")
+    .replace(/\bltrs\b/gi, "liters");
+}
+
+// ✅ TTS: Read aloud the recipe
 function readRecipeAloud(recipeName, ingredients, instructions) {
+  if (speechSynthesis.speaking) {
+    speechSynthesis.cancel(); // Stop any ongoing speech
+  }
+
   const message = `The recipe is for ${recipeName}. 
-  To make this dish, you'll need: ${ingredients.join(", ")}. 
-  Here's how it's made: ${instructions}`;
+    To make this dish, you'll need: ${expandAbbreviations(ingredients.join(", "))}. 
+    Here's how it's made: ${expandAbbreviations(instructions)}`;
 
-  const utterance = new SpeechSynthesisUtterance(message);
-  utterance.lang = 'en-IN'; // Indian English accent
-  utterance.pitch = 1;
-  utterance.rate = 0.9;
-  utterance.voice = speechSynthesis.getVoices().find(voice => voice.name.includes("Female") || voice.name.includes("Google"));
+  currentUtterance = new SpeechSynthesisUtterance(message);
+  currentUtterance.lang = 'en-IN';
+  currentUtterance.pitch = 1;
+  currentUtterance.rate = 0.9;
 
-  speechSynthesis.speak(utterance);
+  const voices = speechSynthesis.getVoices();
+  const preferredVoice = voices.find(voice => voice.name.includes("Female") || voice.name.includes("Google"));
+  if (preferredVoice) currentUtterance.voice = preferredVoice;
+
+  speechSynthesis.speak(currentUtterance);
+}
+
+// ✅ TTS: Pause/Resume toggle
+function toggleSpeech() {
+  if (!speechSynthesis.speaking) return;
+
+  if (isPaused) {
+    speechSynthesis.resume();
+    isPaused = false;
+  } else {
+    speechSynthesis.pause();
+    isPaused = true;
+  }
+}
+
+// ✅ TTS: Stop speech
+function stopSpeech() {
+  if (speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+    isPaused = false;
+  }
 }
 
 async function searchRecipes() {
@@ -35,6 +80,7 @@ async function searchRecipes() {
   for (const recipe of limitedRecipes) {
     const videoLink = await fetchYouTubeVideo(recipe.strMeal || recipe.name);
 
+    // Extract ingredients
     const ingredients = [];
     for (let i = 1; i <= 20; i++) {
       const ing = recipe[`strIngredient${i}`];
@@ -48,16 +94,12 @@ async function searchRecipes() {
     const instructions = recipe.strInstructions || recipe.instructions || "Instructions not available";
 
     resultsDiv.innerHTML += `
-      <div>
-        <h3>
+      <div style="margin-bottom: 20px;">
+        <h3 style="display: flex; align-items: center; gap: 10px;">
           ${recipeName}
-          <button 
-            onclick='readRecipeAloud(${JSON.stringify(recipeName)}, ${JSON.stringify(ingredients)}, ${JSON.stringify(instructions)})' 
-            style="margin-left: 10px; font-size: 18px;" 
-            title="Read Aloud"
-          >
-            🔊
-          </button>
+          <button onclick='readRecipeAloud(${JSON.stringify(recipeName)}, ${JSON.stringify(ingredients)}, ${JSON.stringify(instructions)})' title="Read Aloud" style="font-size: 18px; background: none; border: none; cursor: pointer;">🔊</button>
+          <button onclick='toggleSpeech()' title="Pause/Resume" style="font-size: 18px; background: none; border: none; cursor: pointer;">⏯️</button>
+          <button onclick='stopSpeech()' title="Stop" style="font-size: 18px; background: none; border: none; cursor: pointer;">🛑</button>
         </h3>
         <img src="${recipe.strMealThumb || recipe.image}" alt="${recipeName}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />
         <p><strong>Ingredients:</strong> ${ingredients.join(", ")}</p>
