@@ -28,12 +28,11 @@ async function getRecipesByIngredient(ingredient) {
 }
 
 // -- YouTube API Key --
-const YOUTUBE_API_KEY = "REPLACE_WITH_YOUR_ACTUAL_API_KEY";
+const YOUTUBE_API_KEY = "AIzaSyDt9MlePDg0HXXi4gvnhLODXLiHycpd4mc";
 
-// -- YouTube Search Function --
 async function fetchYouTubeVideo(recipeName) {
   const query = `${recipeName} recipe`;
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=1&key=${AIzaSyDt9MlePDg0HXXi4gvnhLODXLiHycpd4mc}`;
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=1&key=${YOUTUBE_API_KEY}`;
 
   try {
     const response = await fetch(url);
