@@ -1,3 +1,5 @@
+// Test change to force Git detect update
+
 let currentUtterance = null;
 let isPaused = false;
 
