@@ -132,9 +132,10 @@ function searchRecipes() {
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML = "";
 
-  const matches = recipes.filter(recipe =>
-    input.every(ing => recipe.ingredients.includes(ing))
-  );
+ const matches = recipes.filter(recipe =>
+  input.some(ing => recipe.ingredients.some(rIng => rIng.includes(ing)))
+);
+
 
   if (matches.length === 0) {
    resultsDiv.innerHTML += `<div>
