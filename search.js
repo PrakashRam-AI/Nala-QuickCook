@@ -1,4 +1,4 @@
-// Test change to force Git detect update
+
 
 let currentUtterance = null;
 let isPaused = false;
@@ -63,8 +63,6 @@ async function readRecipeAloud(recipeName, ingredients, instructions) {
 
   speechSynthesis.speak(currentUtterance);
   isPaused = false;
-}
-
 }
 
 // ✅ TTS: Pause/Resume
