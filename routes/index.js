@@ -5,6 +5,9 @@ var router = express.Router();
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
+console.log("🚀 Route hit");
+console.log("Query string:", req.query);
+
 
     if(Object.keys(req.query).length === 0){
         res.send("No input given");
