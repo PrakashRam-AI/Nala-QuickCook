@@ -5,8 +5,8 @@
  */
 
 var app = require('../app');
-var debug = require('debug')('api:server');
-var http = require('http');
+var app = require('../server');
+console.log("🚀 Deployed version: 2025-08-09-02");
 
 /**
  * Get port from environment and store in Express.

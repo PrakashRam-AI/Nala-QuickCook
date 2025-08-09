@@ -1,23 +1,23 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
+
 const app = express();
-const port = 3000;
 
 // Enable CORS so frontend can call this
 app.use(cors());
 
-// Connect to the SQLite database
-const db = new sqlite3.Database("recipe.sqlite", (err) => {
+// ✅ Use the correct DB path inside the repo
+const db = new sqlite3.Database("./data/recipe.sqlite", (err) => {
   if (err) {
     console.error("❌ Error connecting to database:", err.message);
   } else {
-    console.log("✅ Connected to recipe.sqlite database");
+    console.log("✅ Connected to ./data/recipe.sqlite");
   }
 });
 
 // 🔍 Extract recipe title from instruction text
-function extractTitleFromInstructions(instruction) {
+function extractTitleFromInstructions(instruction = "") {
   const match = instruction.match(/to begin.*?making\s+(.*?),/i);
   if (match) {
     const rawTitle = match[1].trim();
@@ -51,8 +51,8 @@ app.get("/search", (req, res) => {
     } else {
       const filtered = rows
         .filter((row) => {
-          const prep = parseInt(row.PrepTimeInMins || 0);
-          const cook = parseInt(row.CookTimeInMins || 0);
+          const prep = parseInt(row.PrepTimeInMins || 0, 10);
+          const cook = parseInt(row.CookTimeInMins || 0, 10);
           return prep + cook <= 30;
         })
         .map((row) => ({
@@ -60,7 +60,8 @@ app.get("/search", (req, res) => {
           image: "", // Placeholder for now
           ...row,
           TotalTimeInMins:
-            parseInt(row.PrepTimeInMins || 0) + parseInt(row.CookTimeInMins || 0),
+            parseInt(row.PrepTimeInMins || 0, 10) +
+            parseInt(row.CookTimeInMins || 0, 10),
         }));
 
       res.json(filtered);
@@ -68,9 +69,8 @@ app.get("/search", (req, res) => {
   });
 });
 
-// Start server
-console.log("🚀 Backend version: 2025-08-09-01");
+// 🔖 Version marker (shows in Render logs)
+console.log("🚀 Backend version: 2025-08-09-02");
 
-app.listen(port, () => {
-  console.log(`🚀 Server running at http://localhost:${port}`);
-});
+// ❗ Do NOT app.listen here. bin/www will start the server.
+module.exports = app;
