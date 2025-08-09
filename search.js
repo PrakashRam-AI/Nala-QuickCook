@@ -1,14 +1,15 @@
 // search.js — QuickCook (Nalan 🍲)
-// Uses Render API, shows top 3 recipes, embeds YouTube via youtube.js, and supports TTS.
+// Mobile-first UI; fetches from Render API; embeds YouTube; TTS play/pause/stop.
 
 import { getYoutubeEmbedFor } from "./youtube.js";
 
-const API_BASE = "https://nala-api-co3e.onrender.com"; // ✅ your live backend
+const API_BASE = "https://nala-api-co3e.onrender.com"; // your live backend
+const FALLBACK_IMG = "assets/fallback-recipe.jpg";
 
+// ---------------- TTS ----------------
 let currentUtterance = null;
 let isPaused = false;
 
-// ---------- TTS ----------
 function loadVoices() {
   return new Promise((resolve) => {
     const voices = speechSynthesis.getVoices();
@@ -21,15 +22,20 @@ async function speak(text, lang = "en-IN") {
   if (!text) return;
   await loadVoices();
 
+  // Resume if paused
   if (currentUtterance && isPaused) {
     speechSynthesis.resume();
     isPaused = false;
     return;
   }
-  if (speechSynthesis.speaking) speechSynthesis.cancel();
+
+  // Stop any ongoing speech
+  if (speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+  }
 
   currentUtterance = new SpeechSynthesisUtterance(text);
-  currentUtterance.lang = lang; // later: hi-IN, ta-IN
+  currentUtterance.lang = lang; // later: "hi-IN", "ta-IN"
   currentUtterance.rate = 1.0;
   currentUtterance.pitch = 1.0;
   speechSynthesis.speak(currentUtterance);
@@ -43,55 +49,66 @@ function pauseSpeech() {
 }
 
 function stopSpeech() {
-  speechSynthesis.cancel();
+  if (speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+  }
   currentUtterance = null;
   isPaused = false;
 }
 
-// ---------- API ----------
+// --------------- API ----------------
 async function fetchRecipes(ingredient) {
-  const url = `${API_BASE}/search?q=${encodeURIComponent(ingredient.trim().toLowerCase())}`;
+  const q = ingredient.trim().toLowerCase();
+  const url = `${API_BASE}/search?q=${encodeURIComponent(q)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`API error ${res.status}`);
   return res.json();
 }
 
-// ---------- UI Bindings ----------
-document.getElementById("searchBtn")?.addEventListener("click", onSearch);
-document.getElementById("ingredientInput")?.addEventListener("keydown", (e) => {
+// --------------- UI BINDINGS ---------------
+const $ = (id) => document.getElementById(id);
+
+$("#searchBtn")?.addEventListener("click", onSearch);
+$("#ingredientInput")?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") onSearch();
 });
 
-// If you have a mic button elsewhere, wire it to set #ingredientInput and call onSearch()
+function showMessage(msg) {
+  const el = $("#message");
+  if (el) el.textContent = msg;
+}
 
+function setLoading(isLoading) {
+  showMessage(isLoading ? "Searching..." : "");
+}
+
+// --------------- SEARCH FLOW ---------------
 async function onSearch() {
   stopSpeech();
-  const ingredient = (document.getElementById("ingredientInput")?.value || "").trim();
-  if (!ingredient) return showMessage("Please enter an ingredient.");
+  const ingredient = ($("#ingredientInput")?.value || "").trim();
+  if (!ingredient) {
+    showMessage("Please enter an ingredient.");
+    return;
+  }
 
-  showMessage("Searching...");
+  setLoading(true);
   try {
     const data = await fetchRecipes(ingredient);
-
-    // Double-guard to top 3 (server already slices, but harmless)
-    const top3 = data.slice(0, 3);
-
+    const top3 = data.slice(0, 3); // server also caps to 3, double-guard
     await renderResults(top3);
     showMessage(`${top3.length} recipe(s) found.`);
   } catch (err) {
     console.error(err);
     showMessage("Error fetching recipes. Try again.");
+    renderResults([]); // clear UI
+  } finally {
+    setLoading(false);
   }
 }
 
-function showMessage(msg) {
-  const el = document.getElementById("message");
-  if (el) el.textContent = msg;
-}
-
-// ---------- Rendering ----------
+// --------------- RENDERING ---------------
 async function renderResults(recipes = []) {
-  const container = document.getElementById("results");
+  const container = $("#results");
   if (!container) return;
   container.innerHTML = "";
 
@@ -102,7 +119,7 @@ async function renderResults(recipes = []) {
 
   // Pre-fetch YouTube embeds in parallel
   const embeds = await Promise.all(
-    recipes.map((r) => getYoutubeEmbedFor((r.name || "").toString()))
+    recipes.map((r) => getYoutubeEmbedFor(String(r.name || "")))
   );
 
   recipes.forEach((r, idx) => {
@@ -110,9 +127,7 @@ async function renderResults(recipes = []) {
     const ingredients = r.TranslatedIngredients || "";
     const instructions = r.TranslatedInstructions || "";
     const total = r.TotalTimeInMins ?? "—";
-
-    // Optional fallback image if missing/blank
-    const imgSrc = r.image && r.image.trim() ? r.image : "assets/fallback-recipe.jpg";
+    const imgSrc = r.image && String(r.image).trim() ? r.image : FALLBACK_IMG;
 
     const embed = embeds[idx];
     const videoHtml = embed
@@ -139,14 +154,20 @@ async function renderResults(recipes = []) {
       </div>
     `;
 
-    card.querySelector(".speak").addEventListener("click", () => {
+    // Wire TTS buttons
+    card.querySelector(".speak")?.addEventListener("click", () => {
       const narration =
         `${title}. Total time ${total} minutes. Ingredients: ${ingredients}. Steps: ${instructions}`;
       speak(narration, "en-IN");
     });
-    card.querySelector(".pause").addEventListener("click", pauseSpeech);
-    card.querySelector(".stop").addEventListener("click", stopSpeech);
+    card.querySelector(".pause")?.addEventListener("click", pauseSpeech);
+    card.querySelector(".stop")?.addEventListener("click", stopSpeech);
 
     container.appendChild(card);
   });
 }
+
+// Optional: auto-focus input on load
+window.addEventListener("DOMContentLoaded", () => {
+  $("#ingredientInput")?.focus();
+});
