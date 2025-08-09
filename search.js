@@ -1,129 +1,132 @@
+// search.js — fetch from Render API, render top 3, with TTS intact
+
+const API_BASE = "https://nala-api-co3e.onrender.com"; // ✅ your live backend
+
 let currentUtterance = null;
 let isPaused = false;
 
-// ✅ Load voices fully before using them
+// Load voices (Chrome quirk)
 function loadVoices() {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     let voices = speechSynthesis.getVoices();
     if (voices.length) return resolve(voices);
-
-    speechSynthesis.onvoiceschanged = () => {
-      voices = speechSynthesis.getVoices();
-      resolve(voices);
-    };
+    speechSynthesis.onvoiceschanged = () => resolve(speechSynthesis.getVoices());
   });
 }
 
-// ✅ Expand abbreviations in TTS
-function expandAbbreviations(text) {
-  return text
-    .replace(/\btbs\b/gi, "tablespoon")
-    .replace(/\btbsp\b/gi, "tablespoon")
-    .replace(/\btsp\b/gi, "teaspoon")
-    .replace(/\bkg\b/gi, "kilogram")
-    .replace(/\bg\b/gi, "gram")
-    .replace(/\bml\b/gi, "milliliter")
-    .replace(/\bcms\b/gi, "centimeters")
-    .replace(/\bltrs\b/gi, "liters");
-}
-
-// ✅ Read Recipe Aloud
-async function readRecipeAloud(recipeName, ingredients, instructions) {
-  if (speechSynthesis.speaking || speechSynthesis.paused) {
-    speechSynthesis.cancel();
-  }
-
-  const voices = await loadVoices();
-  const preferredVoice = voices.find(v =>
-    v.lang.startsWith('en') &&
-    (v.name.includes("Female") || v.name.includes("Google") || v.name.includes("India"))
-  );
-
-  const message = `The recipe is for ${recipeName}. 
-    You will need: ${expandAbbreviations(ingredients)}.
-    Here's how to cook it: ${expandAbbreviations(instructions)}`;
-
-  currentUtterance = new SpeechSynthesisUtterance(message);
-  currentUtterance.lang = 'en-US';
-  currentUtterance.pitch = 1;
-  currentUtterance.rate = 0.9;
-
-  if (preferredVoice) currentUtterance.voice = preferredVoice;
-
-  speechSynthesis.speak(currentUtterance);
-  isPaused = false;
-}
-
-function toggleSpeech() {
-  if (!speechSynthesis.speaking) return;
-
-  if (speechSynthesis.paused) {
+async function speak(text, lang = "en-IN") {
+  if (!text) return;
+  await loadVoices();
+  if (currentUtterance && isPaused) {
     speechSynthesis.resume();
     isPaused = false;
-  } else {
+    return;
+  }
+  if (speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+  }
+  currentUtterance = new SpeechSynthesisUtterance(text);
+  currentUtterance.lang = lang;           // later: 'hi-IN', 'ta-IN'
+  currentUtterance.rate = 1.0;
+  currentUtterance.pitch = 1.0;
+  speechSynthesis.speak(currentUtterance);
+}
+
+function pauseSpeech() {
+  if (speechSynthesis.speaking) {
     speechSynthesis.pause();
     isPaused = true;
   }
 }
 
 function stopSpeech() {
-  if (speechSynthesis.speaking || speechSynthesis.paused) {
-    speechSynthesis.cancel();
-    isPaused = false;
+  speechSynthesis.cancel();
+  currentUtterance = null;
+  isPaused = false;
+}
+
+async function fetchRecipes(ingredient) {
+  const url = `${API_BASE}/search?q=${encodeURIComponent(ingredient)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return await res.json();
+}
+
+// Minimal UI bindings (assumes #ingredientInput, #results exist)
+document.getElementById("searchBtn")?.addEventListener("click", onSearch);
+document.getElementById("ingredientInput")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") onSearch();
+});
+
+async function onSearch() {
+  stopSpeech();
+  const ingredient = (document.getElementById("ingredientInput")?.value || "").trim();
+  if (!ingredient) return showMessage("Please enter an ingredient.");
+
+  showMessage("Searching...");
+  try {
+    const data = await fetchRecipes(ingredient);
+    const top3 = data.slice(0, 3); // double-guard even though server limits
+    renderResults(top3);
+    showMessage(`${top3.length} recipe(s) found.`);
+  } catch (err) {
+    console.error(err);
+    showMessage("Error fetching recipes. Try again.");
   }
 }
 
-// ✅ Search and Render
-async function searchRecipes() {
-  const input = document.getElementById("ingredientInput").value.trim().toLowerCase();
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "";
+function showMessage(msg) {
+  const el = document.getElementById("message");
+  if (el) el.textContent = msg;
+}
 
-  if (!input) {
-    resultsDiv.innerHTML = "<p>Please enter an ingredient.</p>";
+function renderResults(recipes = []) {
+  const container = document.getElementById("results");
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!recipes.length) {
+    container.innerHTML = `<div class="empty">No recipes found under 30 mins.</div>`;
     return;
   }
 
-  try {
-    const response = await fetch(`http://localhost:3000/search?q=${input}`);
-    const data = await response.json();
+  recipes.forEach((r) => {
+    const title = r.name || "Unknown Dish";
+    const ingredients = r.TranslatedIngredients || "";
+    const instructions = r.TranslatedInstructions || "";
+    const total = r.TotalTimeInMins ?? "—";
 
-    if (!data || data.length === 0) {
-      resultsDiv.innerHTML = "<p>No recipes available.</p>";
-      return;
-    }
+    // Optional fallback image (planned)
+    const imgSrc = r.image && r.image.trim() ? r.image : "assets/fallback-recipe.jpg";
 
-    const top3 = data.slice(0, 3);
+    const card = document.createElement("div");
+    card.className = "recipe-card";
+    card.innerHTML = `
+      <div class="recipe-media">
+        <img src="${imgSrc}" alt="${title}" loading="lazy" />
+      </div>
+      <div class="recipe-body">
+        <h3>${title}</h3>
+        <div class="meta">Total time: ${total} mins</div>
+        <div class="section"><strong>Ingredients:</strong><br>${ingredients}</div>
+        <div class="section"><strong>Instructions:</strong><br>${instructions}</div>
+        <div class="actions">
+          <button class="speak" aria-label="Read recipe">🔊 Read</button>
+          <button class="pause" aria-label="Pause reading">⏸️ Pause</button>
+          <button class="stop" aria-label="Stop reading">⏹️ Stop</button>
+          <a class="youtube" href="https://www.youtube.com/results?search_query=${encodeURIComponent(title)}" target="_blank" rel="noopener">▶️ Video</a>
+        </div>
+      </div>
+    `;
 
-    for (const recipe of top3) {
-      const videoLink = await fetchYouTubeVideo(recipe.name);
-      const imageHTML = recipe.image
-        ? `<img src="${recipe.image}" alt="${recipe.name}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;" />`
-        : "";
+    card.querySelector(".speak").addEventListener("click", () => {
+      const narration =
+        `${title}. Total time ${total} minutes. Ingredients: ${ingredients}. Steps: ${instructions}`;
+      speak(narration, "en-IN");
+    });
+    card.querySelector(".pause").addEventListener("click", pauseSpeech);
+    card.querySelector(".stop").addEventListener("click", stopSpeech);
 
-      resultsDiv.innerHTML += `
-        <div style="margin-bottom: 20px;">
-          <h3 style="display: flex; align-items: center; justify-content: space-between;">
-            <span>${recipe.name}</span>
-            <span style="display: flex; gap: 10px; align-items: center;">
-              <button onclick='readRecipeAloud(${JSON.stringify(recipe.name)}, ${JSON.stringify(recipe.TranslatedIngredients)}, ${JSON.stringify(recipe.TranslatedInstructions)})' title="Read Aloud" style="font-size: 18px; background: none; border: none; cursor: pointer;">🔊</button>
-              <button onclick='toggleSpeech()' title="Pause/Resume" style="font-size: 18px; background: none; border: none; cursor: pointer;">⏯️</button>
-              <button onclick='stopSpeech()' title="Stop" style="font-size: 18px; background: none; border: none; cursor: pointer;">🛑</button>
-            </span>
-          </h3>
-          ${imageHTML}
-          <p><strong>Ingredients:</strong> ${recipe.TranslatedIngredients}</p>
-          <p><strong>Instructions:</strong> ${recipe.TranslatedInstructions}</p>
-          ${
-            videoLink
-              ? `<p><a href="${videoLink}" target="_blank">🎥 Watch Recipe Video</a></p>`
-              : `<p><i>No video available</i></p>`
-          }
-        </div><hr/>
-      `;
-    }
-  } catch (err) {
-    console.error("❌ Error:", err);
-    resultsDiv.innerHTML = "<p>Something went wrong. Please try again.</p>";
-  }
+    container.appendChild(card);
+  });
 }
