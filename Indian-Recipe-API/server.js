@@ -69,6 +69,8 @@ app.get("/search", (req, res) => {
 });
 
 // Start server
+console.log("🚀 Backend version: 2025-08-09-01");
+
 app.listen(port, () => {
   console.log(`🚀 Server running at http://localhost:${port}`);
 });
