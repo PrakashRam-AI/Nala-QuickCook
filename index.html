@@ -31,12 +31,14 @@
   <!-- Results Section -->
   <div id="results"></div>
 
-  <!-- JavaScript Modules -->
-  <script src="api.js"></script>
-  <script src="main.js"></script>
-  <script src="search.js?v=6"></script>
-  <script src="prefs.js?v=2"></script>
-<script src="youtube.js"></script>
+ <!-- JavaScript -->
+<script src="api.js"></script>
+<script src="main.js"></script>
+<script src="prefs.js?v=2"></script>
+
+<!-- search.js imports youtube.js internally -->
+<script type="module" src="search.js?v=7"></script>
+
 
 
 </body>
